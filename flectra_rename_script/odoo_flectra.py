@@ -23,6 +23,15 @@ Run command  : python odoo_flectra.py <path> [--copy/-c] [--help/-h]
 @example> For Help       : python odoo_flectra.py [-h]
 @example> Without Copy   : python odoo_flectra.py /home/<system_user>/<module_name>
 @example> With Copy      : python odoo_flectra.py /home/<system_user>/<module_name> --copy
+
+**Note ::
+- If you execute this script on migrated module then there is possibility that you can get following kind of strings:
+    -- "flectra, flectra",
+    -- "odoo, flectra, flecta" 
+- So do not use multiple times on migrated module.
+- In case you get any error during execution, the best way, use --copy flag on your module,
+so you can have a backup of your real data.
+
 #######################################################################################################'''
 
 if '--help' in sys.argv or '-H' in sys.argv or '-h' in sys.argv:
@@ -100,86 +109,82 @@ replace_email = {
     'info@odoo.com': 'info@flectrahq.com',
 }
 
+def init_files(root):
+    infile = open(root + '__init__.py', 'rb').read()
+    out = open(root + '__init__.py', 'wb')
+    for i in init_replacements.keys():
+        infile = infile.replace(i, init_replacements[i])
+    out.write(infile)
+    out.close
+
+def manifest_files(root):
+    temp = {}
+    infile = open(root + '__manifest__.py', 'rb').read()
+    temp.update(replace_email)
+    temp.update(website_replacements)
+    out = open(root + '__manifest__.py', 'wb')
+    for i in temp.keys():
+        infile = infile.replace(i, temp[i])
+    out.write(infile)
+    out.close()
+    content_replacements(root, '__manifest__.py', manifest_replacements)
+
+def xml_csv_json_files(root, name):
+    infile = open(root + name, 'rb').read()
+    out = open(root + name, 'wb')
+    for i in replace_email.keys():
+        infile = infile.replace(i, replace_email[i])
+    for i in xml_replacements.keys():
+        infile = infile.replace(i, xml_replacements[i])
+    out.write(infile)
+    out.close()
+
+def python_files(root, name):
+    infile = open(root + name, 'rb').read()
+    out = open(root + name, 'wb')
+    for i in replace_email.keys():
+        infile = infile.replace(i, replace_email[i])
+    out.write(infile)
+    out.close()
+    content_replacements(root, name, replacements)
+
+def content_replacements(root, name, replace_dict):
+    infile = open(root + name, 'rb').readlines()
+    multilist = []
+    if infile:
+        for line in infile:
+            words = line.split(' ')
+            single_line = []
+            for word in words:
+                if word.startswith('info@') or word.startswith("'info@") or word.startswith('"info@'):
+                    single_line.append(word)
+                    continue
+                for i in replace_dict.keys():
+                    word = word.replace(i, replace_dict[i])
+                single_line.append(word)
+            multilist.append(single_line)
+    with open('temp', 'ab') as temp_file:
+        for lines in multilist:
+            for word in lines:
+                word = word if word.endswith('\n') else word + ' ' if word else ' '
+                temp_file.write(word)
+        os.rename('temp', root + name)
+
 def rename_files(root, items):
     for name in items:
         logging.info(root + name)
-        temp = {}
         if name in ingnore_files:
             continue
         if name == '__init__.py':
-            infile = open(root + name).read()
-            out = open(root + name, 'w')
-            for i in init_replacements.keys():
-                infile = infile.replace(i, init_replacements[i])
-            out.write(infile)
-            out.close
+            init_files(root)
         elif name == '__manifest__.py':
-            infile = open(root + name).read()
-            temp.update(replace_email)
-            temp.update(website_replacements)
-            out = open(root + name, 'w')
-            for i in temp.keys():
-                infile = infile.replace(i, temp[i])
-            out.write(infile)
-            out.close()
-            infile = open(root + name).readlines()
-            multilist = []
-            if infile:
-                for line in infile:
-                    words = line.split(' ')
-                    single_line = []
-                    for word in words:
-                        if word.startswith('info@') or word.startswith("'info@") or word.startswith('"info@'):
-                            single_line.append(word)
-                            continue
-                        for i in manifest_replacements.keys():
-                            word = word.replace(i, manifest_replacements[i])
-                        single_line.append(word)
-                    multilist.append(single_line)
-            with open('temp', 'a') as temp_file:
-                for lines in multilist:
-                    for word in lines:
-                        word = word if word.endswith('\n') else word + ' ' if word else ' '
-                        temp_file.write(word)
-                os.rename('temp', root + name)
+            manifest_files(root)
         else:
             sp_name = name.split('.')
             if len(sp_name) >= 2 and sp_name[-1] in ['xml', 'csv', 'json']:
-                infile = open(root + name).read()
-                out = open(root + name, 'w')
-                for i in replace_email.keys():
-                    infile = infile.replace(i, replace_email[i])
-                for i in xml_replacements.keys():
-                    infile = infile.replace(i, xml_replacements[i])
-                out.write(infile)
-                out.close()
-            elif sp_name[-1] not in ['po', 'pot', 'pyc']:
-                infile = open(root + name).read()
-                out = open(root + name, 'w')
-                for i in replace_email.keys():
-                    infile = infile.replace(i, replace_email[i])
-                out.write(infile)
-                out.close()
-                infile = open(root + name).readlines()
-                multilist = []
-                if infile:
-                    for line in infile:
-                        words = line.split(' ')
-                        single_line = []
-                        for word in words:
-                            if word.startswith('info@') or word.startswith("'info@") or word.startswith('"info@'):
-                                single_line.append(word)
-                                continue
-                            for i in replacements.keys():
-                                word = word.replace(i, replacements[i])
-                            single_line.append(word)
-                        multilist.append(single_line)
-                with open('temp', 'a') as temp_file:
-                    for lines in multilist:
-                        for word in lines:
-                            word = word if word.endswith('\n') else word + ' ' if word else ' '
-                            temp_file.write(word)
-                    os.rename('temp', root + name)
+                xml_csv_json_files(root, name)
+            elif sp_name[-1] == 'py':
+                python_files(root, name)
         try:
             for i in replacements.keys():
                 if name != (name.replace(i, replacements[i])) :
