@@ -39,7 +39,7 @@ if '--help' in sys.argv or '-H' in sys.argv or '-h' in sys.argv:
     os._exit(1)
 
 if len(sys.argv) < 2:
-    logging.error('Directory path is required, pelase follow below instructions.')
+    logging.error('Directory path is required, please follow below instructions.')
     print(_help)
     os._exit(1)
 else:
@@ -183,7 +183,7 @@ def rename_files(root, items):
             sp_name = name.split('.')
             if len(sp_name) >= 2 and sp_name[-1] in ['xml', 'csv', 'json']:
                 xml_csv_json_files(root, name)
-            elif sp_name[-1] == 'py':
+            elif sp_name[-1] in ['py', 'css', 'less', 'js]':
                 python_files(root, name)
         try:
             for i in replacements.keys():
