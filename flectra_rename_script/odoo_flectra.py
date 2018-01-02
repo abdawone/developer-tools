@@ -110,8 +110,8 @@ replace_email = {
 }
 
 def init_files(root):
-    infile = open(root + '__init__.py', 'rb').read()
-    out = open(root + '__init__.py', 'wb')
+    infile = open(root + '__init__.py', 'r').read()
+    out = open(root + '__init__.py', 'w')
     for i in init_replacements.keys():
         infile = infile.replace(i, init_replacements[i])
     out.write(infile)
@@ -119,10 +119,10 @@ def init_files(root):
 
 def manifest_files(root):
     temp = {}
-    infile = open(root + '__manifest__.py', 'rb').read()
+    infile = open(root + '__manifest__.py', 'r').read()
     temp.update(replace_email)
     temp.update(website_replacements)
-    out = open(root + '__manifest__.py', 'wb')
+    out = open(root + '__manifest__.py', 'w')
     for i in temp.keys():
         infile = infile.replace(i, temp[i])
     out.write(infile)
@@ -130,8 +130,8 @@ def manifest_files(root):
     content_replacements(root, '__manifest__.py', manifest_replacements)
 
 def xml_csv_json_files(root, name):
-    infile = open(root + name, 'rb').read()
-    out = open(root + name, 'wb')
+    infile = open(root + name, 'r').read()
+    out = open(root + name, 'w')
     for i in replace_email.keys():
         infile = infile.replace(i, replace_email[i])
     for i in xml_replacements.keys():
@@ -140,8 +140,8 @@ def xml_csv_json_files(root, name):
     out.close()
 
 def python_files(root, name):
-    infile = open(root + name, 'rb').read()
-    out = open(root + name, 'wb')
+    infile = open(root + name, 'r').read()
+    out = open(root + name, 'w')
     for i in replace_email.keys():
         infile = infile.replace(i, replace_email[i])
     out.write(infile)
@@ -149,7 +149,7 @@ def python_files(root, name):
     content_replacements(root, name, replacements)
 
 def content_replacements(root, name, replace_dict):
-    infile = open(root + name, 'rb').readlines()
+    infile = open(root + name, 'r').readlines()
     multilist = []
     if infile:
         for line in infile:
@@ -163,7 +163,7 @@ def content_replacements(root, name, replace_dict):
                     word = word.replace(i, replace_dict[i])
                 single_line.append(word)
             multilist.append(single_line)
-    with open('temp', 'ab') as temp_file:
+    with open('temp', 'a') as temp_file:
         for lines in multilist:
             for word in lines:
                 word = word if word.endswith('\n') else word + ' ' if word else ' '
@@ -183,7 +183,7 @@ def rename_files(root, items):
             sp_name = name.split('.')
             if len(sp_name) >= 2 and sp_name[-1] in ['xml', 'csv', 'json']:
                 xml_csv_json_files(root, name)
-            elif sp_name[-1] in ['py', 'css', 'less', 'js]':
+            elif sp_name[-1] in ['py', 'css', 'less', 'js']:
                 python_files(root, name)
         try:
             for i in replacements.keys():
